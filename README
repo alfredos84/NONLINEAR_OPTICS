@@ -1,0 +1,16 @@
+This code simulates the generalized Schödinger non-linear equation (GNLSE) using the Split-Step Method with Runge-Kutta 4 interaction picture embedded (RK4-IP).
+It is programmed in C / CUDA since it uses hybrid computation between CPU and GPU. To execute it type in a terminal
+
+$ nvcc SSFM.cu functions.cu -lcufftw -lcufft -lcurand -o SSFMcu
+
+and execute it as
+
+$ ./SSFMcu
+
+Note that you must have some CUDA libraries installed. For this you can download the NVIDIA / CUDA drivers from the page
+
+https://developer.nvidia.com/cuda-downloads
+
+For any information contact my mailbox
+
+alfredo.daniel.sanchez@gmail.com
