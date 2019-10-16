@@ -9,7 +9,6 @@
 #include "functions.h"
 
 const double PI2 = 2.0 * 3.14159265358979323846;    //2*pi
-//const double C = 299792458*1E9/1E12 ;               // speed of ligth in vacuum [nm/ps]
 #define NELEMS(x)  (sizeof(x) / sizeof((x).x))      // number of elements of an array
 
 // Complex data type
@@ -172,7 +171,7 @@ void noise_generator (CC *h_noise, double SNR, int N, double POWER){
     CHECK(cudaFree(d_noise_norm));
 }
 
-void input_field_T(CC *in_t, double *T, int SIZE, double T0, double POWER, char m){
+void input_field_T(CC *in_t, double *T, int SIZE, double T0, double POWER, char m, int step){
     switch(m){
         case 'c' :
             printf("Wave: Continuous Wave\n");
@@ -195,6 +194,20 @@ void input_field_T(CC *in_t, double *T, int SIZE, double T0, double POWER, char 
                 in_t[i].y = 0;
             }
             break;            
+        case 't' :
+            printf("Wave: Step\n");
+            int frac = SIZE/step;
+            for (int i = 0; i < SIZE; i++){
+                if((i/frac)%2==0){
+                    in_t[i].x = sqrt(POWER);
+                    in_t[i].y = 0;
+                }
+                else{
+                    in_t[i].x = sqrt(POWER)+0.05*sqrt(POWER);
+                    in_t[i].y = 0;
+                }
+            }
+            break;             
     }
 }
 
@@ -351,39 +364,23 @@ void COMPUTE_TFN( CC *g, CC *d_u, CC *d_u_W, CC *d_hR_W, CC *d_SST, int SIZE, do
     int dimx = 1 << 7;
     dim3 block(dimx);
     dim3 grid((SIZE + block.x - 1) / block.x);
-    
     cufftHandle plan;
     cufftPlan1d(&plan, SIZE, CUFFT_Z2Z, 1);
-    
     modulus<<<grid,block>>>( d_u, d_op1, SIZE ); // d_op1 = |d_u|^2.
     CHECK(cudaDeviceSynchronize());  
-
     //CHECK(cudaGetLastError());   
     cufftExecZ2Z(plan, (CC *)d_op1, (CC *)d_op1_W, CUFFT_INVERSE); // d_op1_W.
     CHECK(cudaDeviceSynchronize());  
     CUFFTscale<<<grid,block>>>(d_op1_W, SIZE, SIZE);
     CHECK(cudaDeviceSynchronize());  
-/*    if (kk == 2){
-        CC *pipa = (CC *)malloc(nBytes);   
-        CHECK(cudaMemcpy(pipa, d_op1, nBytes, cudaMemcpyDeviceToHost));
-        FILE *au;	
-        au = fopen("prueba.txt", "w+");
-        for ( int i = 0; i < SIZE; i++ )
-            fprintf(au, "%15.20f\t%15.20f\n",pipa[i].x, pipa[i].y);// writing data into file
-        fclose(au);//closing file
-        free(pipa);
-    }   */       
     cpx_prod_GPU<<<grid,block>>>(d_op1_W, d_hR_W, d_op2_W ,SIZE); // d_op2_W = d_op1_W * d_hR_W.
     CHECK(cudaDeviceSynchronize());  
     //CHECK(cudaGetLastError());   
-
     cufftExecZ2Z(plan, (CC *)d_op2_W, (CC *)d_op2, CUFFT_FORWARD); // d_op2.
     CHECK(cudaDeviceSynchronize());  
     //CHECK(cudaGetLastError());   
- 
     CC *d_aux2;  
     CHECK(cudaMalloc((void **)&d_aux2, nBytes));
-    //CHECK(cudaMemset(d_aux2, 0, nBytes));
     KFR<<<grid,block>>>(d_op1, d_op2, d_aux2, FR, SIZE); // d_aux2 = (1-fR) * d_op1 + fR * d_op2
     CHECK(cudaDeviceSynchronize());  
     //CHECK(cudaGetLastError()); 
@@ -392,17 +389,14 @@ void COMPUTE_TFN( CC *g, CC *d_u, CC *d_u_W, CC *d_hR_W, CC *d_SST, int SIZE, do
     CHECK(cudaDeviceSynchronize());  
     //CHECK(cudaGetLastError());   
     CHECK(cudaFree(d_aux2));
-
     cufftExecZ2Z(plan, (CC *)d_op3, (CC *)d_op3_W, CUFFT_INVERSE); // d_op3_W.
     CHECK(cudaDeviceSynchronize());  
     CUFFTscale<<<grid,block>>>(d_op3_W, SIZE, SIZE);
     CHECK(cudaDeviceSynchronize());  
-    
     cpx_prod_GPU<<<grid,block>>>(d_SST, d_op3_W, d_op4_W, SIZE); // d_op4_W = d_SST * d_op3.
     CHECK(cudaDeviceSynchronize());  
     equal<<<grid,block>>>(g, d_op4_W, SIZE);
     CHECK(cudaDeviceSynchronize());  
-
     //Destroy CUFFT context
     cufftDestroy(plan);
 }
