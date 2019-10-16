@@ -19,7 +19,7 @@ __global__ void modulus1(CC *z, double *w, int SIZE);
 __global__ void reduce(double* vector);
 __global__ void scale(CC *a, int SIZE, double s);
 void noise_generator (CC *h_noise, double SNR, int N, double POWER);
-void input_field_T(CC *in_t, double *T, int SIZE, double T0, double POWER, char m);
+void input_field_T(CC *in_t, double *T, int SIZE, double T0, double POWER, char m, int step);
 void inic_vector_T(double *T, int SIZE, double T_WIDTH, double dT);
 void inic_vector_Traman(double *TT, int SIZE, double T_WIDTH);
 void inic_vector_F(double *F, int SIZE, double DT);
