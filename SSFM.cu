@@ -23,19 +23,20 @@ const double C = 299792458*1E9/1E12;                // speed of ligth in vacuum 
 int main(int argc, char *argv[]){
     
     int n_realiz  = atoi(argv[1]);
-    char filename[30];    
-//     double factores[] = {1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4.0,4.2,4.4,5,7};
-    double factores[] = {0.4};
-    //     double zetas[] = {0.806947050823174,1.22948852419295,1.68678444201766,2.15471786130035,2.63060083218639,3.11231436925599,3.58713636055043,4.06655885441418,4.54937408313657,5.03479143042566,5.52226574595509,6.01140507644173,6.50191793087684,6.99358148288206,7.48622149215599,7.97969911328359,8.46822089274572,8.95571211198437,9.44373913801277,9.93223993719176,10.4211619922505,10.9104604900467,11.4000969195446,11.8900379731019,12.3802546754517,12.8707216859706,13.3614167344678,13.8523201610183,14.3434145377030,14.8346843554233,15.8176963477275,16.8012615152227,38.4183548167205,57.6377388081710};
+    char filename1[30],filename2[30],filename5[30],filename3[30],filename4[30];    
+    double factores[] = { 1.1, 1.3, 4.0 };
+    double distancias[] = { 0.6, 1.3, 8.3};    
+//     double factores[] = { 1.1, 1.2, 1.3, 1.5, 2, 3, 4 };    
+//     double distancias[] = { 0.6, 0.9, 1.3, 2.0, 3.8, 7.4, 11 };    
     size_t n_fact = sizeof(factores)/sizeof(factores[0]);
     for (int pp = 0; pp < (int)n_fact; pp++){        
         for ( int nr = 0; nr < n_realiz; nr++ ){
             printf("p = %.2f - Realisation #%d/%d\n", factores[pp], nr+1, n_realiz);
             int i; 
             int N = 1<<15; // number of points
-            
+
             // Parameters for kernels //
-            int dimx = 1 << 7;
+            int dimx = 1 << 5;
             dim3 block(dimx);
             dim3 grid((N + block.x - 1) / block.x);
             printf("Kernels dims: <<<(%d,%d), (%d,%d)>>>\n", grid.x, grid.y, block.x, block.y);
@@ -45,34 +46,33 @@ int main(int argc, char *argv[]){
             CHECK(cudaGetDeviceProperties(&deviceProp, dev));
             printf("Using Device %d: %s\n\n", dev, deviceProp.name);
             CHECK(cudaSetDevice(dev));
-            
+
             int nBytes =  sizeof(CC)*N;
-            double dT = 0.001/4; // time step [ps]
+            double dT = 0.001; // time step [ps]
             double t_width = (double )(N * dT ); // time window size
             double dF = 1/t_width; // frequency step [ps]
             double T0 = 0.1; //temporal width of pulses [ps]
-            double lambda_0 = 1550; // central wavelength [nm]
+            double lambda_0 = 5000; // central wavelength [nm]
             double w0 = PI2 * C / lambda_0; // angular frequency in 2*pi*[THz]
-            double betas[3] = {-1E-3, 0*0.04E-3,-0*0.0016E-3}; // betas [ps^i / m]
+            double betas[3] = {-1E-3, 0*0.004E-3,-0*0.0016E-3}; // betas [ps^i / m]
             //double betas[3] = {-0.020E-3, 0, 0}; // betas [ps^i / m]
             int lb = 3; // number of betas that are included
             double sol_ord, P0, factor; // soliton order, power and factor for anomalous dispersion
-            
-            double gamma = 0.1; // nonlinear parameter gamma [1/W/m]
+
+            double gamma = 0.10; // nonlinear parameter gamma [1/W/m]
             double tau1 = 0.0155, tau2 = 0.2305; // Raman times [ps] 
-            
+
             #if defined(RAMAN)
-                double fr = 0.18; // fractional Raman contribution
+                double fr = 0.031; // fractional Raman contribution
             #endif
             #if !defined(RAMAN)
                 double fr = 0.00; // fractional Raman contribution
             #endif
-            
-            
-            char kindpower = 'a'; // select among different kind of power
+
+            char kindpower = 'p'; // select among different kind of power
             switch(kindpower) {
                 case 'n': // select soliton order and then associated power will be computed
-                    sol_ord = 5; // soliton order
+                    sol_ord = 1; // soliton order
                     P0 = pow(sol_ord,2) * fabs(betas[0])/(gamma*pow(T0,2));
                     break;
                 case 'p': // select power and then soliton order will be computed                
@@ -81,19 +81,19 @@ int main(int argc, char *argv[]){
                     sol_ord = sqrt(P0*gamma*pow(T0,2)) / fabs(betas[0]);
                     break;
                 case 'a': // arbitrary power
-                    P0 = 100; // peak power of input [W]
+                    P0 =200; // peak power of input [W]
                     factor = factores[pp];
                     break;
             }
-            
+
             // Distances //
-            double LD = pow(T0,2) / fabs(betas[0]);  // dispersion lenght
+//             double LD = pow(T0,2) / fabs(betas[0]);  // dispersion lenght
 //             double LD3 = pow(T0,3) / fabs(betas[1]); // third order dispersion length
-            double LNL = 1/gamma/P0; // nonlinear length
+//             double LNL = 1/gamma/P0; // nonlinear length
 //             double Zfiss = LD/sol_ord; // soliton fission length
 //             double Zsol = 0.5 * 3.14159265358979323846 * LD; // soliton period            
-            double flength = 8*LNL;
-            double h = flength/50000 ; // z step
+            double flength = distancias[pp];
+            double h = flength/100000; // z step
 
             int steps_z = (int )floor(flength/h); // number of steps in Z
             
@@ -108,8 +108,7 @@ int main(int argc, char *argv[]){
             CC *hR_W = (CC*)malloc(nBytes);  // Raman response in frequency domain
             CC *self_st = (CC*)malloc(nBytes);  // Self-steepening
             CC *V_ss = (CC*)malloc(nBytes);
-            
-            
+                        
             /* Time, frequency and Z vectors*/
             double *T;    
             T = (double*) malloc(sizeof(double) * N);
@@ -169,20 +168,22 @@ int main(int argc, char *argv[]){
             #endif
             
             // Print parameters // 
-            printf("Parameters\n\nN = %i points\nbeta2 = %f ps^2/km\nbeta3 = %f ps^3/km\ngamma = %.3f 1/W/km\ndT = %f ps\ndF = %f THz\nfr = %f\ntau1 = %f ps\ntau2 = %f ps\nw0 = %.2f THz\nlambda0 = %.1f nm\nstep size = %f m\nDistance = %f m\nNumber of steps %d\nPower = %.2f W\n",N, betas[0]*1000, betas[1]*1000, gamma*1000, dT, dF, fr, tau1, tau2, w0, lambda_0, h,flength, steps_z, P0);
+            printf("Parameters\n\nN = %i points\nbeta2 = %f ps^2/km\nbeta3 = %f ps^3/km\ngamma = %.3f 1/W/km\ntwidth = %f ps\ndT = %f ps\ndF = %f THz\nfr = %f\ntau1 = %f ps\ntau2 = %f ps\nw0 = %.2f THz\nlambda0 = %.1f nm\nstep size = %f m\nDistance = %f m\nNumber of steps %d\nPower = %.2f W\n",N, betas[0]*1000, betas[1]*1000, gamma*1000, t_width, dT, dF, fr, tau1, tau2, w0, lambda_0, h,flength, steps_z, P0);
             
             
             // Input field and envelope expressed in the interaction picture
             linear_operator(D_OP, V_ss, betas, lb, N, h); //set exp(D*h/2) as a function of omega = 2*pi*f
             
-            // Wave form: 'c' = CW, 'g' = gaussian pulse, 's' = soliton //
-            char  m = 'c';
+            // Wave form: 'c' = CW, 'g' = gaussian pulse, 's' = soliton, 't' = step funcion with a defined step //
+            char m = 'c';
+            int step = 1; //to modulate the CW in step steps
+
             #if !defined(NOISE)    
-                input_field_T(u1, T, N, T0, P0, m); // signal without noise
+                input_field_T(u1, T, N, T0, P0, m, step); // signal without noise
                 printf("Sin ruido\n");
             #endif     
             #if defined(NOISE)         
-                input_field_T(u1, T, N, T0, P0, m);
+                input_field_T(u1, T, N, T0, P0, m, step);
                 CC *h_noise = (CC *)malloc(nBytes);
                 double SNR = 50; // Signal-to-Noise ratio
                 noise_generator(h_noise, SNR, N, P0 );
@@ -215,29 +216,12 @@ int main(int argc, char *argv[]){
             CHECK(cudaMalloc((void **)&d_u1_W, nBytes));                CHECK(cudaMemset(d_u1_W, 0, nBytes));
             CHECK(cudaMalloc((void **)&d_u1, nBytes));                  CHECK(cudaMemset(d_u1, 0, nBytes));
             CHECK(cudaMemcpy(d_u1, u1, nBytes, cudaMemcpyHostToDevice));    
-            
+
             cufftExecZ2Z(plan_1, (CC *)d_u1, (CC *)d_u1_W, CUFFT_INVERSE); // d_u1
-            //CHECK(cudaDeviceSynchronize());
+            CHECK(cudaDeviceSynchronize());
             CUFFTscale<<<grid,block>>>(d_u1_W, N, N);
             CHECK(cudaDeviceSynchronize());
 
-            FILE *tres;
-            sprintf(filename, "inputT_%.2f_%d.txt", factor, nr);
-            //tres = fopen("inputT.txt", "w+");
-            tres = fopen(filename, "w+");
-            for ( i = 0; i < N; i++ )
-                fprintf(tres, "%15.20f\t%15.20f\n", u1[i].x, u1[i].y);// writing data into file
-                fclose(tres);//closing file	
-                
-            CHECK(cudaMemcpy(u1_W, d_u1_W, nBytes, cudaMemcpyDeviceToHost));
-            FILE *cuatro;
-            sprintf(filename, "inputW_%.2f_%d.txt", factor, nr);
-            //cuatro = fopen("inputW.txt", "w+");
-            cuatro = fopen(filename, "w+");
-            for ( i = 0; i < N; i++ )
-                fprintf(cuatro, "%15.20f\t%15.20f\n", u1_W[i].x, u1_W[i].y);// writing data into file
-            fclose(cuatro);//closing file
-                
             // Allocating memory on GPU //
             CHECK(cudaMalloc((void **)&d_u_ip, nBytes));    CHECK(cudaMemset(d_u_ip, 0, nBytes));
             CHECK(cudaMalloc((void **)&d_alpha1, nBytes));  CHECK(cudaMemset(d_alpha1, 0, nBytes));
@@ -255,7 +239,7 @@ int main(int argc, char *argv[]){
             CC *d_aux1; CHECK(cudaMalloc((void **)&d_aux1, nBytes));  CHECK(cudaMemset(d_aux1, 0, nBytes));
             CC *d_aux2; CHECK(cudaMalloc((void **)&d_aux2, nBytes));  CHECK(cudaMemset(d_aux2, 0, nBytes));
             CC *d_aux3; CHECK(cudaMalloc((void **)&d_aux3, nBytes));  CHECK(cudaMemset(d_aux3, 0, nBytes));
-            
+
             // Device vectors for COMPUTE_TFN //
             CC *d_op1, *d_op1_W, *d_op2, *d_op2_W, *d_op3, *d_op3_W, *d_op4_W;
             CHECK(cudaMalloc((void **)&d_op1, nBytes));               CHECK(cudaMemset(d_op1, 0, nBytes));
@@ -265,12 +249,27 @@ int main(int argc, char *argv[]){
             CHECK(cudaMalloc((void **)&d_op3, nBytes));               CHECK(cudaMemset(d_op3, 0, nBytes));
             CHECK(cudaMalloc((void **)&d_op3_W, nBytes));             CHECK(cudaMemset(d_op3_W, 0, nBytes));
             CHECK(cudaMalloc((void **)&d_op4_W, nBytes));             CHECK(cudaMemset(d_op4_W, 0, nBytes));
-            
-            
+
+            sprintf(filename1, "outputTreal_%.2f_%d.txt", factor, nr);
+            sprintf(filename2, "outputTimag_%.2f_%d.txt", factor, nr);
+            sprintf(filename3, "outputWreal_%.2f_%d.txt", factor, nr);
+            sprintf(filename4, "outputWimag_%.2f_%d.txt", factor, nr);
+            sprintf(filename5, "Z.txt");
+            FILE *cincor;
+            FILE *cincoi;
+            FILE *seisr;
+            FILE *seisi;
+            FILE *zvec;
+            cincor = fopen(filename1, "w+");
+            cincoi = fopen(filename2, "w+");
+            seisr = fopen(filename3, "w+");
+            seisi = fopen(filename4, "w+");
+            zvec = fopen(filename5, "w+");
+
             float num;
             printf("Starting main loop on CPU & GPU...\n");
             double iStart = seconds();
-                  
+
             // START MAIN LOOP //
             for (int s = 0; s < steps_z; s++){
                 cpx_prod_GPU<<<grid,block>>>( d_D_OP, d_u1_W, d_u_ip, N ); // d_u_ip = d_D_OP * d_u1_W.  
@@ -306,14 +305,34 @@ int main(int argc, char *argv[]){
                 cufftExecZ2Z(plan_1, (CC *)d_u1_W, (CC *)d_u1, CUFFT_FORWARD); // d_u1.
                 CHECK(cudaDeviceSynchronize());
                 
-                num = (float) s*100/(steps_z-1);
+//                 if(s == 0 || s%5000==0){
+                if(s == 0 || s == steps_z-1){                
+                    //printf("\nVALOR = %d\n",s );
+                    CHECK(cudaMemcpy(u1, d_u1, nBytes, cudaMemcpyDeviceToHost));
+                    CHECK(cudaMemcpy(u1_W, d_u1_W, nBytes, cudaMemcpyDeviceToHost));
+                    for ( i = 0; i < N; i++ ){
+                        fprintf(cincor, "%15.20f\t", u1[i].x);// writing data into file
+                        fprintf(cincoi, "%15.20f\t", u1[i].y);// writing data into file
+                        fprintf(seisr, "%15.20f\t", u1_W[i].x);// writing data into file
+                        fprintf(seisi, "%15.20f\t", u1_W[i].y);// writing data into file
+                    }    
+                    fprintf(zvec, "%15.20f\t", s*h/flength);// writing data into file
+                    fprintf(cincor, "\n");// writing data into file
+                    fprintf(cincoi, "\n");// writing data into file
+                    fprintf(seisr,  "\n");// writing data into file
+                    fprintf(seisi,  "\n");// writing data into file
+                }
+
+                num = (float) s*200/(steps_z-1);
                 if ( (abs(num - 1.00) <= 0.001) || (abs(num - 10.00) <= 0.001) || (abs(num - 25.00) <= 0.001) || (abs(num - 50.00) <= 0.001) || (abs(num - 75.00) <= 0.001) || (abs(num - 90.00) <= 0.001) || (abs(num - 100.00) <= 0.001) ){ 
                     printf("%.2f %% completed...\n", num);
                 }          
             }
-            
-            CHECK(cudaMemcpy(u1, d_u1, nBytes, cudaMemcpyDeviceToHost));
-            CHECK(cudaMemcpy(u1_W, d_u1_W, nBytes, cudaMemcpyDeviceToHost));
+            fclose(cincor);//closing file	
+            fclose(cincoi);//closing file
+            fclose(seisr);//closing file
+            fclose(seisi);//closing file                        
+            fclose(zvec);//closing file 
             
             double iElaps = seconds() - iStart;
             if(iElaps>60){
@@ -322,23 +341,7 @@ int main(int argc, char *argv[]){
             else{
                 printf("...time elapsed %.3f sec in realisation #%d\n\n", iElaps, nr+1);
             }
-            
-            sprintf(filename, "outputT_%.2f_%d.txt", factor, nr);
-            FILE *cinco;
-            cinco = fopen(filename, "w+");
-            //tres = fopen("output_T.txt", "w+");
-            for ( i = 0; i < N; i++ )
-                fprintf(cinco, "%15.20f\t%15.20f\n", u1[i].x, u1[i].y);// writing data into file
-            fclose(cinco);//closing file	
-                
-            sprintf(filename, "outputW_%.2f_%d.txt", factor, nr);
-            FILE *seis;
-            seis = fopen(filename, "w+");
-            //cuatro = fopen("output_W.txt", "w+");
-            for ( i = 0; i < N; i++ )
-                fprintf(seis, "%15.20f\t%15.20f\n", u1_W[i].x, u1_W[i].y);// writing data into file
-            fclose(seis);//closing file
-                
+                                    
             // Deallocating memory and destroying plans //
             free(u1); free(u1_W);      free(D_OP);
             free(self_st);             free(hR);
