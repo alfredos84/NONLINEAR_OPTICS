@@ -9,7 +9,6 @@ Created on Tue Jan 12 19:03:27 2021
 
 import numpy as np
 import numpy.fft as fft
-import matplotlib.pyplot as plt
 
 # Functions declarations 
 
@@ -60,19 +59,30 @@ def linear_operator(Awj,z,w,vj,vm,beta_j):
     return Awj*np.exp(1j*z*(-w*(1/vj-1/vm)+w**2*beta_j))
 
 def rk4(As, Ap, kappa_s, kappa_p, dk, z, dz):
-    # Fourth-order Runge-Kutta for the nonlinear propagation in a half-step dz
-        s1 = dz * dAsdz(Ap     ,As     ,z     ,dk,kappa_s)
-        p1 = dz * dApdz(Ap     ,As     ,z     ,dk,kappa_p)       
-        s2 = dz * dAsdz(Ap+p1/2,As+s1/2,z+dz/2,dk,kappa_s)
-        p2 = dz * dApdz(Ap+p1/2,As+s1/2,z+dz/2,dk,kappa_p)       
-        s3 = dz * dAsdz(Ap+p2/2,As+s2/2,z+dz/2,dk,kappa_s)
-        p3 = dz * dApdz(Ap+p2/2,As+s2/2,z+dz/2,dk,kappa_p)       
-        s4 = dz * dAsdz(Ap+p3  ,As+s3  ,z+dz  ,dk,kappa_s)
-        p4 = dz * dApdz(Ap+p3  ,As+s3  ,z+dz  ,dk,kappa_p)   
-        As = As + (s1 + 2*s2 + 2*s3 + s4 )/6
-        Ap = Ap + (p1 + 2*p2 + 2*p3 + p4 )/6
-        return As, Ap
+    """This function return the nonlinear half-step using the Runge-Kutta
+    method.
+    INPUTS
+    As,Ap: signal and pump vectors.
+    κs,κp: signal and pump coupling
+    Δk: mismatch factor (usually equal to zero)
+    z, dz: lenght and half-step size
     
+    OUTPUTS
+    As,Ap after passing a half-step size.
+    """
+    # Fourth-order Runge-Kutta for the nonlinear propagation in a half-step dz
+    s1 = dz * dAsdz(Ap     ,As     ,z     ,dk,kappa_s)
+    p1 = dz * dApdz(Ap     ,As     ,z     ,dk,kappa_p)       
+    s2 = dz * dAsdz(Ap+p1/2,As+s1/2,z+dz/2,dk,kappa_s)
+    p2 = dz * dApdz(Ap+p1/2,As+s1/2,z+dz/2,dk,kappa_p)       
+    s3 = dz * dAsdz(Ap+p2/2,As+s2/2,z+dz/2,dk,kappa_s)
+    p3 = dz * dApdz(Ap+p2/2,As+s2/2,z+dz/2,dk,kappa_p)       
+    s4 = dz * dAsdz(Ap+p3  ,As+s3  ,z+dz  ,dk,kappa_s)
+    p4 = dz * dApdz(Ap+p3  ,As+s3  ,z+dz  ,dk,kappa_p)   
+    As = As + (s1 + 2*s2 + 2*s3 + s4 )/6
+    Ap = Ap + (p1 + 2*p2 + 2*p3 + p4 )/6
+    return As, Ap
+
 def evol_in_crystal(As, Ap, kappa_s, kappa_p, dk, z, dz, Lc, w, vp, vs,
                     beta_p, beta_s):
     """ This function performs the SSFM in order to get the evolution across
@@ -100,30 +110,28 @@ def evol_in_crystal(As, Ap, kappa_s, kappa_p, dk, z, dz, Lc, w, vp, vs,
         # i+=1
     return As, Ap 
 
-def filtrado(signal, n_new, extra_points):
-    m,n = signal.shape
-    sig_output = np.zeros([m,n_new], dtype='complex')
-    x = np.arange(0,n)
-    win_centrals = np.tanh(0.3*(x-extra_points)-np.tanh(0.3*(x-(n-extra_points))))+1
-    win_centrals = win_centrals/np.max(win_centrals)
-    win_left = 0.5*(np.tanh(-0.3*(x-n_new))+1)
-    win_right= 0.5*(np.tanh(0.3*(x-20))+1)
-    for i in range(0,m):
-        if(i==0):
-            signal[i,:]*=win_left
-            sig_output[i,:]=signal[i,0:n_new]
-        if(i==m-1):
-            signal[i,:]*=win_right
-            sig_output[i,:]=signal[i,extra_points-1:-1]
-        else:
-            signal[i,:]*=win_centrals
-            sig_output[i,:] = signal[i,extra_points//2:n-extra_points//2]
-    return sig_output
-
 def freq2cm1(f,c):
+    """This function converts frecuency in THz and returns the corresponding
+    wavenumber in cm^{-1}"""
     return f/c*1e4
 
+def cm12freq(wn,c):
+    """This function converts wavenumber in cm^{-1} and returns the
+    corresponding frecuency in THz.
+    """
+    return c*1e-4*wn
+
 def filtro_triang(wn, win_size, spectrum):
+    """This is a window function. It returns the filtered spectrum in order to
+    simulate a 5-cm^{-1}-resolution spectrum analyzer.
+    INPUTS
+    wn:   wavenumber in cm^{-1}
+    win_size: size of window in in cm^{-1}
+    spectrum: spectrum vector
+    
+    OUTPUT
+    Filtered spectrum"""
+    
     inds = np.where((wn>=-0.5*win_size)&(wn<=0.5*win_size))
     wns = wn[inds]
     N = len(wns)
@@ -133,6 +141,33 @@ def filtro_triang(wn, win_size, spectrum):
     triang_win[0:int(M/2)+1] = 2*n[0:int(M/2)+1]/M
     triang_win[int(M/2)+1:-1] = 2-2*n[int(M/2)+1:-1]/M
     triang_win/=np.sum(triang_win)
-    # plt.figure()
-    # plt.plot(wns,triang_win)
-    return np.convolve(triang_win,spectrum)
+    convol = np.convolve(triang_win,spectrum)
+    dif = convol.size - spectrum.size
+    return convol[int(dif/2):convol.size-int(dif/2)-1]
+
+# def noise(f_ext, h, f0):
+#     signal = np.random.normal(0,1,f_ext.size)+1j*np.random.normal(0,1, f_ext.size)
+#     signal/=np.abs(signal)
+#     noise = np.sqrt(h*(f_ext+f0))*signal
+#     return fft.ifftshift(fft.ifft(noise))
+
+# def filtrado(signal, n_new, extra_points):
+#     m,n = signal.shape
+#     sig_output = np.zeros([m,n_new], dtype='complex')
+#     x = np.arange(0,n)
+#     p = 1.0
+#     win_centrals = np.tanh(p*(x-extra_points//2))-np.tanh(p*(x-(n_new+extra_points//2)))+1
+#     win_centrals = win_centrals/np.max(win_centrals)
+#     win_left = 0.5*(np.tanh(-p*(x-n_new))+1)
+#     win_right= 0.5*(np.tanh(p*(x-extra_points))+1)
+#     for i in range(0,m):
+#         if(i==0):
+#             signal[i,:]*=win_left
+#             sig_output[i,:]=signal[i,0:n_new]
+#         if(i==m-1):
+#             signal[i,:]*=win_right
+#             sig_output[i,:]=signal[i,extra_points-1:-1]
+#         else:
+#             signal[i,:]*=win_centrals
+#             sig_output[i,:] = signal[i,extra_points//2:n-extra_points//2]
+#     return sig_output
