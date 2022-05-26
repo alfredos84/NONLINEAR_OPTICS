@@ -1,0 +1,22 @@
+This code is useful for simulations on Optical Parametric Oscillators.
+It solves the coupled-wave equations for signal and pump using a parallel computing scheme that uses the library THRUST.
+This makes this code easely scalable as well as readable.
+
+For running this code is necessary to have a GPU in your computer and installed the CUDA drivers and the CUDA-TOOLKIT as well.
+
+If you use Linux as an operative system, this project shuold be work well, but take care on the flag sm_75 defined here. 
+This flag accounts for the GPU architecture and may be different in another GPU. 
+If you do not know which is the suitable flag to compile you need, please visit or google the something like
+"NVIDIA + My GPU Model + architecture". For instance, "Nvidia Geforce MX250 architecture" returns something like
+GeForce MX200 Series	 GeForce MX250 384 @ 1.52 - 1.58 GHz 64 Bit @ 7000 MHz GeForce MX230 256 @ 1.52 - 1.53 GHz 64 Bit @ 7000 MHz
+Codename	             N17S-G2
+Architecture	         Pascal
+Pipelines	             384 - unified
+TMUs	                 32
+
+Then, knowing my architecture is Pascal, go to the NVIDIA documentation in https://docs.nvidia.com/cuda/pascal-compatibility-guide/index.html
+You will find that for this specific model the proper flag is sm_30 among others, but not sm_75. This is because this code was tested in a
+Turing GPU and sm_75 is the proper flag for that architecture.
+
+There also is a shell file (cwOPO.sh) where you can define all the parameters that you can pass the main file. In my case, I needed to modify
+parameters such as number of round trips, grid size, among other relevant parameters.
