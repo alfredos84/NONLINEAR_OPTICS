@@ -10,21 +10,34 @@ rm *.dat                             # This removes all .dat files in the curren
 rm *.txt                             # This removes all .txt files in the current folder. Comment this line for safe. 
 rm cuOPO                             # This removes a previuos executable file (if it exist)
 
-COMPILER="nvcc"                      # Nvidia compiler
-MAIN_FILE="cuOPO.cu"                 # Main file CUDA extension .cu
-EXEC_FILE="cuOPO"
-printf "compiling...   "
-$COMPILER $MAIN_FILE -DCW_OPO -DTHREE_EQS --gpu-architecture=sm_75 -lcufftw -lcufft -o $EXEC_FILE
+
+########################################################################################################################################
+# Compilation
+
+
+nvcc cuOPO.cu -DCW_OPO -DTHREE_EQS --gpu-architecture=sm_75 -lcufftw -lcufft -o cuOPO
+
+
 # Notice there are 2 preprocessor variables in this compilation that are useful to set
 # the regime and the number of equations used in the simulations.
+#
 # For set the regime use: -DCW_OPO (for cw) or -DNS_OPO (for nanosecond). It is essential to define it!!.
+#
 # For set three coupled-wave equations use: -DTHREE_EQS (two eqs. is set by default)
+# There are three flags specific for CUDA compiler:
+# --gpu-architecture=sm_75: please check your GPU card architecture (Ampere, Fermi, Tesla, Pascal, Turing, Kepler, etc) 
+#                           to set the correct number sm_XX. This code was tested using a Nvidia GeForce GTX 1650 card (Turing
+#                           architecture). Please visit https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
+#                           to set the proper flag according to your GPU card.
+# -lcufftw -lcufft        : these are needed to perform cuFFT (the Fourier transform on GPU)
+########################################################################################################################################
 
-##################################
+
+########################################################################################################################################
 # This is only for the folder name 
 REG="cw"                             # Set regime: ns or cw. 
 EQS="3"                              # Set number of equations to solve (2 or 3)
-##################################
+########################################################################################################################################
 
 
 # The variables defined below (ARGX) will be passed as arguments to the main file 
