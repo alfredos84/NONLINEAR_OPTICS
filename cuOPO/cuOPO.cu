@@ -1,6 +1,3 @@
-// Compile with "nvcc Combcw.cu functions.cu --gpu-architecture=sm_60 -lcufftw -lcufft -lcurand -o Comb_cw" for GeForce MX250 (Pascal)
-//-gencode=arch=compute_60,code=sm_60
-
 #include <iostream>
 #include <string>
 #include <random>
