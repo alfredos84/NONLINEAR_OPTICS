@@ -17,7 +17,7 @@ printf "compiling...   "
 $COMPILER $MAIN_FILE -DCW_OPO -DTHREE_EQS --gpu-architecture=sm_75 -lcufftw -lcufft -o $EXEC_FILE
 # Notice there are 2 preprocessor variables in this compilation that are useful to set
 # the regime and the number of equations used in the simulations.
-# For set the regime use: -DCW_OPO (for cw) or -DNS_OPO (for nanosecond). (It is essential to define it)
+# For set the regime use: -DCW_OPO (for cw) or -DNS_OPO (for nanosecond). It is essential to define it!!.
 # For set three coupled-wave equations use: -DTHREE_EQS (two eqs. is set by default)
 
 ##################################
