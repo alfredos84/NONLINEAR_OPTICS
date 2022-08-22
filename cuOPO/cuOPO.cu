@@ -405,7 +405,9 @@ int main(int argc, char *argv[]){
 	// Difine which fields are resonant (SRO, DRO or TRO)
 	bool is_Ap_resonant = false;
 	bool is_As_resonant = true;
+	#ifdef THREE_EQS
 	bool is_Ai_resonant = true;
+	#endif
 	
 	// Main loop (fields in the cavity)
 	unsigned int mm = 0; // counts for cw saved round trips
