@@ -78,9 +78,11 @@ do
 							printf "\nPower/Pth        = ${N} \n" 
 							
 							GDD=${GD[$g]} 
-							printf "\nGDD compensation = ${GDD}%%\n" 
+							printf "\nGDD compensation = ${GDD}%%\n"
+							
 							R=${RE[$r]} 
-							printf "\nLcav/Lc          = ${ARG4} \n" 
+							printf "\nLcav/Lc          = ${ARG4} \n"
+							
 							DELTAS=${D[$i]}
 							printf "\ndelta            = ${DELTAS}\n"
 							
