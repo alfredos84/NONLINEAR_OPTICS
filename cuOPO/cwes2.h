@@ -1,14 +1,16 @@
+/*---------------------------------------------------------------------------*/
+// * This file contains functions to solve the Split-Step Fourier method (SSMF)
+// * needed to calculate the electric fields evolution through the nonlinear crystal.
+// * 
+// * In particular, this file should be used when only two equation describes the 
+// * problem, i.e., parametric down-convertion or second-harmonic generation.
+// * Only two frequencies are involved in theses problems.
+/*---------------------------------------------------------------------------*/
+
+
+
 #ifndef _CWES2CUH
 #define _CWES2CUH
-
-
-/** This file contains functions to solve the Split-Step Fourier method (SSMF)
- * needed to calculate the electric fields evolution through the nonlinear crystal.
- * 
- * In particular, this file should be used when only two equation describes the 
- * problem, i.e., parametric down-convertion or second-harmonic generation.
- * Only two frequencies are involved in theses problems.
-*/
 
 #pragma once
 
