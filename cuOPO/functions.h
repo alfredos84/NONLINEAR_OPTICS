@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*/
- * This file contains a set of functions useful for the execution of the main file.
+// * This file contains a set of functions useful for the execution of the main file.
 /*---------------------------------------------------------------------------*/
 
 #ifndef _FUNCTIONSCUH
