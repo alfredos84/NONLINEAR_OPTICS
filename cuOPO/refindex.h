@@ -1,13 +1,14 @@
 /*---------------------------------------------------------------------------*/
- * This file contains a set of functions based on the 
- * Sellmeier equations for three different nonlinear crystals:
- * 1 - MgO:PPLN
- * 2 - MgO:sPPLT
- * 3 - GaP
- * 
- * The user is free to load the Sellmeier equation for a new 
- * χ⁽²⁾ material
+// * This file contains a set of functions based on the 
+// * Sellmeier equations for three different nonlinear crystals:
+// * 1 - MgO:PPLN
+// * 2 - MgO:sPPLT
+// * 3 - GaP
+// * 
+// * The user is free to load the Sellmeier equation for a new 
+// * χ⁽²⁾ material
 /*---------------------------------------------------------------------------*/
+
 
 #ifndef _REFINDEXCUH
 #define _REFINDEXCUH
