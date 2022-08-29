@@ -1,14 +1,16 @@
+/*---------------------------------------------------------------------------*/
+// This file contains functions to solve the Split-Step Fourier method (SSMF)
+// * needed to calculate the electric fields evolution through the nonlinear crystal.
+// * 
+// * In particular, this file should be used for any three-wave mixing problem, i.e.,
+// * sum or difference frequency generation (SFG or DFG) for a single-pass 
+// * (just one round trip) or inside a cavity (multiple round trips).
+/*---------------------------------------------------------------------------*/
+
+
+
 #ifndef _CWES3CUH
 #define _CWES3CUH
-
-
-/** This file contains functions to solve the Split-Step Fourier method (SSMF)
- * needed to calculate the electric fields evolution through the nonlinear crystal.
- * 
- * In particular, this file should be used for any three-wave mixing problem, i.e.,
- * sum or difference frequency generation (SFG or DFG) for a single-pass 
- * (just one round trip) or inside a cavity (multiple round trips).
-*/
 
 #pragma once
 
