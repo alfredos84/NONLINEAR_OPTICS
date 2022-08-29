@@ -1,13 +1,12 @@
 /*---------------------------------------------------------------------------*/
- * This file contains two functions that save files in .dat extension
- * 1 - SaveFileVectorReal()    : save real vectors
- * 2 - SaveFileVectorComplex() : save complex vectors
+// * This file contains two functions that save files in .dat extension
+// * 1 - SaveFileVectorReal()    : save real vectors
+// * 2 - SaveFileVectorComplex() : save complex vectors
  
- Inputs:
- - Vector   : vector to save
- - N        : vector size
- - Filename : name of the saved file
- 
+// Inputs:
+// - Vector   : vector to save
+// - N        : vector size
+// - Filename : name of the saved file
 /*---------------------------------------------------------------------------*/
 
 #ifndef _SAVEFILESCUH
