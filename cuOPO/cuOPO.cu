@@ -1,3 +1,5 @@
+/* Author Alfredo Daniel Sanchez: alfredo.daniel.sanchez@gmail.com */
+
 #include <iostream>
 #include <string>
 #include <random>
