@@ -99,8 +99,9 @@ do
 							mkdir $FOLDER		
 							
 							printf "Bash execution and writing output file...\n\n"
-							./$EXEC_FILE $ARG1 $ARG2 $ARG3 $ARG4 $R $DELTAS $GDD $ARG8 $N $U $MODDEP $FREQMOD | tee -a $FILE
-					# 				./$EXEC_FILE #| tee -a $FILE
+							
+							./cuOPO $ARG1 $ARG2 $ARG3 $ARG4 $R $DELTAS $GDD $ARG8 $N $U $MODDEP $FREQMOD | tee -a $FILE
+
 							printf "Bash finished!!\n\n" 
 							mv *.dat $FOLDER"/"
 							mv *.txt $FOLDER"/"
