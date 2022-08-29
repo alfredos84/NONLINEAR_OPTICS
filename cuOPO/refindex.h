@@ -1,7 +1,4 @@
-#ifndef _REFINDEXCUH
-#define _REFINDEXCUH
-
-/**
+/*---------------------------------------------------------------------------*/
  * This file contains a set of functions based on the 
  * Sellmeier equations for three different nonlinear crystals:
  * 1 - MgO:PPLN
@@ -10,8 +7,10 @@
  * 
  * The user is free to load the Sellmeier equation for a new 
  * χ⁽²⁾ material
-*/
+/*---------------------------------------------------------------------------*/
 
+#ifndef _REFINDEXCUH
+#define _REFINDEXCUH
 
 #pragma once
 
