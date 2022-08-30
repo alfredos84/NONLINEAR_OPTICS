@@ -8,7 +8,6 @@
 /*---------------------------------------------------------------------------*/
 
 
-
 #ifndef _CWES3CUH
 #define _CWES3CUH
 
@@ -40,6 +39,15 @@ using real_t = float;
 
 
 /** Computes the nonlinear part: dA/dz=i.κ.Ax.Ay.exp(i.Δk.L) and saves the result in dAx (x,y are different fields) */
+// INPUTS 
+// dAp, dAs, dAi : evolved electric fields
+//  Ap,  As,  Ai: electric fields
+//  lp,  ls,  li: wavelengths
+//  kp,  ks,  ki: kappas
+//        z: crystal position
+//     SIZE: size vector
+// OUTOPUT
+// save in dAp, dAs, dAi the evolved electric fields
 __global__ void dAdz( complex_t *dAp, complex_t *dAs,  complex_t *dAi, complex_t *Ap, complex_t *As, complex_t *Ai, real_t lp, real_t ls, real_t li, real_t kp, real_t ks, real_t ki, real_t dk, real_t z, int SIZE )
 {
 	
@@ -61,6 +69,15 @@ __global__ void dAdz( complex_t *dAp, complex_t *dAs,  complex_t *dAi, complex_t
 
 
 /** Computes a linear combination Ax + s.kx and saves the result in aux_x */
+// INPUTS 
+// auxp, auxs, auxi : auxiliary vectors
+//   Ap,   As,   Ai : electric fields
+//   lp,   ls,   li : wavelengths
+//   kp,   ks,   ki : vectors for Runge-Kutta
+//                 s: scalar for Runge-Kutta
+//              SIZE: size vector
+// OUTOPUT
+// save in auxp, auxs, auxi the evolved electric fields
 __global__ void LinealCombination( complex_t *auxp, complex_t *auxs, complex_t *auxi, complex_t *Ap, complex_t *As, complex_t *Ai, complex_t *kp, complex_t *ks, complex_t *ki, double s, int SIZE)
 {
 	
@@ -80,6 +97,13 @@ __global__ void LinealCombination( complex_t *auxp, complex_t *auxs, complex_t *
 
 
 /** This kernel computes the final sum after appling the Rounge-Kutta algorithm */
+// INPUTS 
+//  Ap,  As, Ai : electric fields
+//  kXp,kXs, kXi: vectors for Runge-Kutta
+//       dz: step size
+//     SIZE: size vector
+// OUTOPUT
+// Update electric fields using Runge-Kutta after one step size, dz
 __global__ void rk4(complex_t *Ap, complex_t *As,  complex_t *Ai, complex_t *k1p, complex_t *k1s, complex_t *k1i, complex_t *k2p, complex_t *k2s, complex_t *k2i, complex_t *k3p, complex_t *k3s, complex_t *k3i, complex_t *k4p, complex_t *k4s, complex_t *k4i, real_t dz, int SIZE)
 {
 	
@@ -100,6 +124,18 @@ __global__ void rk4(complex_t *Ap, complex_t *As,  complex_t *Ai, complex_t *k1p
 
 /** Computes the linear part: Ax = Ax.exp(i.f(Ω)*z), where f(Ω) is a frequency dependant functions
  including the group velocity and the group velocity dispersion parameters. */
+// INPUTS 
+//     auxp,  auxs,  auxi : auxiliary vectors
+//      Apw,   Asw,   Aiw : electric fields in frequency domain
+//                      w : angular frequency 
+//       lp,   ls,     li : wavelengths
+//       vp,   vs,     vi : group-velocity
+//      b2p,  b2s,    bsi : group-velocity dispersion
+// alphap, alphas, alphai : linear absorpion
+//           SIZE: size vector
+//              z: crystal position
+// OUTOPUT
+// save in auxp, auxs the electric fields after appling dispersion
 __global__ void LinearOperator(complex_t *auxp, complex_t *auxs, complex_t *auxi, complex_t *Apw, complex_t* Asw, complex_t* Aiw, real_t *w, real_t lp, real_t ls, real_t li, real_t vp, real_t vs, real_t vi, real_t b2p, real_t b2s, real_t b2i, real_t alphap, real_t alphas, real_t alphai, int SIZE, real_t z)
 {
 	
@@ -138,7 +174,7 @@ __global__ void LinearOperator(complex_t *auxp, complex_t *auxs, complex_t *auxi
  * 	3 - Repeat 1 for dz/2. 
  * 	4-  Repeat steps 1-3 until finishing the crystal
  */
-void EvolutionInCrystal( real_t *w_ext_gpu, dim3 grid, dim3 block, complex_t *Ap_gpu, complex_t *As_gpu, complex_t *Ai_gpu, complex_t *Apw_gpu, complex_t *Asw_gpu, complex_t *Aiw_gpu, complex_t *k1p_gpu, complex_t *k1s_gpu, complex_t *k1i_gpu, complex_t *k2p_gpu, complex_t *k2s_gpu, complex_t *k2i_gpu, complex_t *k3p_gpu, complex_t *k3s_gpu, complex_t *k3i_gpu, complex_t *k4p_gpu, complex_t *k4s_gpu, complex_t *k4i_gpu, complex_t *auxp_gpu, complex_t *auxs_gpu, complex_t *auxi_gpu, real_t lp, real_t ls, real_t li, real_t vp, real_t vs, real_t vi, real_t b2p, real_t b2s, real_t b2i, real_t dk, real_t alphap, real_t alphas, real_t alphai, real_t kp, real_t ks, real_t ki, real_t dz, int steps_z, int SIZE )
+void EvolutionInCrystal( real_t *w_ext_gpu, dim3 grid, dim3 block, complex_t *Ap, complex_t *As, complex_t *Ai, complex_t *Apw_gpu, complex_t *Asw_gpu, complex_t *Aiw_gpu, complex_t *k1p_gpu, complex_t *k1s_gpu, complex_t *k1i_gpu, complex_t *k2p_gpu, complex_t *k2s_gpu, complex_t *k2i_gpu, complex_t *k3p_gpu, complex_t *k3s_gpu, complex_t *k3i_gpu, complex_t *k4p_gpu, complex_t *k4s_gpu, complex_t *k4i_gpu, complex_t *auxp_gpu, complex_t *auxs_gpu, complex_t *auxi_gpu, real_t lp, real_t ls, real_t li, real_t vp, real_t vs, real_t vi, real_t b2p, real_t b2s, real_t b2i, real_t dk, real_t alphap, real_t alphas, real_t alphai, real_t kp, real_t ks, real_t ki, real_t dz, int steps_z, int SIZE )
 {
 	
 	// Set plan for cuFFT 1D and 2D//
@@ -149,70 +185,70 @@ void EvolutionInCrystal( real_t *w_ext_gpu, dim3 grid, dim3 block, complex_t *Ap
 	for (int s = 0; s < steps_z; s++){
 		/* First RK4 for dz/2 */
 		//k1 = dAdz(kappas,dk,z,A)
-		dAdz<<<grid,block>>>( k1p_gpu, k1s_gpu, k1i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z, SIZE );
+		dAdz<<<grid,block>>>( k1p_gpu, k1s_gpu, k1i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z, SIZE );
 		CHECK(cudaDeviceSynchronize()); 
 		//k2 = dAdz(kappas,dk,z+dz/2,A+k1/2) -> aux = A+k1/2
-		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap_gpu, As_gpu, Ai_gpu, k1p_gpu, k1s_gpu, k1i_gpu, 0.5, SIZE );
+		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap, As, Ai, k1p_gpu, k1s_gpu, k1i_gpu, 0.5, SIZE );
 		CHECK(cudaDeviceSynchronize());   
-		dAdz<<<grid,block>>>( k2p_gpu, k2s_gpu, k2i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
+		dAdz<<<grid,block>>>( k2p_gpu, k2s_gpu, k2i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
 		CHECK(cudaDeviceSynchronize());
 		// k3 = dAdz(kappas,dk,z+dz/2,A+k2/2)
-		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap_gpu, As_gpu, Ai_gpu, k2p_gpu, k2s_gpu, k2i_gpu, 0.5, SIZE );
+		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap, As, Ai, k2p_gpu, k2s_gpu, k2i_gpu, 0.5, SIZE );
 		CHECK(cudaDeviceSynchronize());   
-		dAdz<<<grid,block>>>( k3p_gpu, k3s_gpu, k3i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
+		dAdz<<<grid,block>>>( k3p_gpu, k3s_gpu, k3i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
 		CHECK(cudaDeviceSynchronize());
 		// k4 = dAdz(kappas,dk,z+dz,A+k3)
-		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap_gpu, As_gpu, Ai_gpu, k3p_gpu, k3s_gpu, k3i_gpu, 1.0, SIZE );		
+		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap, As, Ai, k3p_gpu, k3s_gpu, k3i_gpu, 1.0, SIZE );		
 		CHECK(cudaDeviceSynchronize());   
-		dAdz<<<grid,block>>>( k4p_gpu, k4s_gpu, k4i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z+dz/2, SIZE );		
+		dAdz<<<grid,block>>>( k4p_gpu, k4s_gpu, k4i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z+dz/2, SIZE );		
 		CHECK(cudaDeviceSynchronize());
 		// A = A+(k1+2*k2+2*k3+k4)*dz/6
-		rk4<<<grid,block>>>( Ap_gpu, As_gpu, Ai_gpu, k1p_gpu, k1s_gpu, k1i_gpu, k2p_gpu, k2s_gpu, k2i_gpu, k3p_gpu, k3s_gpu, k3i_gpu, k4p_gpu, k4s_gpu, k4i_gpu, dz/2, SIZE );
+		rk4<<<grid,block>>>( Ap, As, Ai, k1p_gpu, k1s_gpu, k1i_gpu, k2p_gpu, k2s_gpu, k2i_gpu, k3p_gpu, k3s_gpu, k3i_gpu, k4p_gpu, k4s_gpu, k4i_gpu, dz/2, SIZE );
 		CHECK(cudaDeviceSynchronize());
 
 		// Linear operator for dz
-		cufftExecC2C(plan1D, (complex_t *)As_gpu, (complex_t *)Asw_gpu, CUFFT_INVERSE);
+		cufftExecC2C(plan1D, (complex_t *)As, (complex_t *)Asw_gpu, CUFFT_INVERSE);
 		CHECK(cudaDeviceSynchronize());
 		CUFFTscale<<<grid,block>>>(Asw_gpu, SIZE, SIZE);
 		CHECK(cudaDeviceSynchronize());
-		cufftExecC2C(plan1D, (complex_t *)Ai_gpu, (complex_t *)Aiw_gpu, CUFFT_INVERSE);
+		cufftExecC2C(plan1D, (complex_t *)Ai, (complex_t *)Aiw_gpu, CUFFT_INVERSE);
 		CHECK(cudaDeviceSynchronize());
 		CUFFTscale<<<grid,block>>>(Aiw_gpu, SIZE, SIZE);
 		CHECK(cudaDeviceSynchronize());
-		cufftExecC2C(plan1D, (complex_t *)Ap_gpu, (complex_t *)Apw_gpu, CUFFT_INVERSE);
+		cufftExecC2C(plan1D, (complex_t *)Ap, (complex_t *)Apw_gpu, CUFFT_INVERSE);
 		CHECK(cudaDeviceSynchronize());
 		CUFFTscale<<<grid,block>>>(Apw_gpu, SIZE, SIZE);
 		CHECK(cudaDeviceSynchronize());
 		LinearOperator<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Apw_gpu, Asw_gpu, Aiw_gpu, w_ext_gpu, lp, ls, li, vp, vs, vi, b2p, b2s, b2i, alphap, alphas, alphai, SIZE, dz);
 		CHECK(cudaDeviceSynchronize());
-		cufftExecC2C(plan1D, (complex_t *)Asw_gpu, (complex_t *)As_gpu, CUFFT_FORWARD);
+		cufftExecC2C(plan1D, (complex_t *)Asw_gpu, (complex_t *)As, CUFFT_FORWARD);
 		CHECK(cudaDeviceSynchronize());
-		cufftExecC2C(plan1D, (complex_t *)Aiw_gpu, (complex_t *)Ai_gpu, CUFFT_FORWARD);
+		cufftExecC2C(plan1D, (complex_t *)Aiw_gpu, (complex_t *)Ai, CUFFT_FORWARD);
 		CHECK(cudaDeviceSynchronize());		
-		cufftExecC2C(plan1D, (complex_t *)Apw_gpu, (complex_t *)Ap_gpu, CUFFT_FORWARD);
+		cufftExecC2C(plan1D, (complex_t *)Apw_gpu, (complex_t *)Ap, CUFFT_FORWARD);
 		CHECK(cudaDeviceSynchronize());
 		
 		/* Second RK4 for dz/2 */
 		//k1 = dAdz(kappas,dk,z,A)
-		dAdz<<<grid,block>>>( k1p_gpu, k1s_gpu, k1i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z, SIZE );
+		dAdz<<<grid,block>>>( k1p_gpu, k1s_gpu, k1i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z, SIZE );
 		CHECK(cudaDeviceSynchronize()); 
 		//k2 = dAdz(kappas,dk,z+dz/2,A+k1/2) -> aux = A+k1/2
-		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap_gpu, As_gpu, Ai_gpu, k1p_gpu, k1s_gpu, k1i_gpu, 0.5, SIZE );
+		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap, As, Ai, k1p_gpu, k1s_gpu, k1i_gpu, 0.5, SIZE );
 		CHECK(cudaDeviceSynchronize());   
-		dAdz<<<grid,block>>>( k2p_gpu, k2s_gpu, k2i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
+		dAdz<<<grid,block>>>( k2p_gpu, k2s_gpu, k2i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
 		CHECK(cudaDeviceSynchronize());
 		// k3 = dAdz(kappas,dk,z+dz/2,A+k2/2)
-		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap_gpu, As_gpu, Ai_gpu, k2p_gpu, k2s_gpu, k2i_gpu, 0.5, SIZE );
+		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap, As, Ai, k2p_gpu, k2s_gpu, k2i_gpu, 0.5, SIZE );
 		CHECK(cudaDeviceSynchronize());   
-		dAdz<<<grid,block>>>( k3p_gpu, k3s_gpu, k3i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
+		dAdz<<<grid,block>>>( k3p_gpu, k3s_gpu, k3i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z+dz/4, SIZE );
 		CHECK(cudaDeviceSynchronize());
 		// k4 = dAdz(kappas,dk,z+dz,A+k3)
-		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap_gpu, As_gpu, Ai_gpu, k3p_gpu, k3s_gpu, k3i_gpu, 1.0, SIZE );		
+		LinealCombination<<<grid,block>>>( auxp_gpu, auxs_gpu, auxi_gpu, Ap, As, Ai, k3p_gpu, k3s_gpu, k3i_gpu, 1.0, SIZE );		
 		CHECK(cudaDeviceSynchronize());   
-		dAdz<<<grid,block>>>( k4p_gpu, k4s_gpu, k4i_gpu, Ap_gpu, As_gpu, Ai_gpu, lp, ls, li, kp, ks, ki, dk, z+dz/2, SIZE );		
+		dAdz<<<grid,block>>>( k4p_gpu, k4s_gpu, k4i_gpu, Ap, As, Ai, lp, ls, li, kp, ks, ki, dk, z+dz/2, SIZE );		
 		CHECK(cudaDeviceSynchronize());
 		// A = A+(k1+2*k2+2*k3+k4)*dz/6
-		rk4<<<grid,block>>>( Ap_gpu, As_gpu, Ai_gpu, k1p_gpu, k1s_gpu, k1i_gpu, k2p_gpu, k2s_gpu, k2i_gpu, k3p_gpu, k3s_gpu, k3i_gpu, k4p_gpu, k4s_gpu, k4i_gpu, dz/2, SIZE );
+		rk4<<<grid,block>>>( Ap, As, Ai, k1p_gpu, k1s_gpu, k1i_gpu, k2p_gpu, k2s_gpu, k2i_gpu, k3p_gpu, k3s_gpu, k3i_gpu, k4p_gpu, k4s_gpu, k4i_gpu, dz/2, SIZE );
 		CHECK(cudaDeviceSynchronize());
 		
 		z+=dz;
@@ -225,4 +261,4 @@ void EvolutionInCrystal( real_t *w_ext_gpu, dim3 grid, dim3 block, complex_t *Ap
 
 
 
-#endif // -> #ifdef _CWES2CUH
+#endif // -> #ifdef _CWES3CUH
