@@ -56,7 +56,7 @@ UPM=(0)                              # Using phase modulator: OFF/ON = 0/1      
 MD=(0)                               # EOM: β (modulation depth in π rads)                        (ARG11)
 FM=(0)                               # δf = FSR - fpm [MHz] Frequency detuning for EOM            (ARG12)
 
-# Each for-loop span over one or more value defined in the previous arguments.
+# Each for-loop span over one or more values defined in the previous arguments. 
 for (( u=0; u<${#UPM[@]}; u++ ))
 do  
 	for (( n=0; n<${#NN[@]}; n++ ))
