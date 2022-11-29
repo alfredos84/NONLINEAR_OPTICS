@@ -39,33 +39,33 @@
 
 
 // Complex data type
-using CC_t = cuFloatComplex;
-using typefl_t = float;
+using complex_t = cuFloatComplex;
+using real_t = float;
 
-using rVech_t = thrust::host_vector<typefl_t>;
-using rVecd_t = thrust::device_vector<typefl_t>;
-using cVech_t = thrust::host_vector<CC_t>;
-using cVecd_t = thrust::device_vector<CC_t>;	
+using rVech_t = thrust::host_vector<real_t>;
+using rVecd_t = thrust::device_vector<real_t>;
+using cVech_t = thrust::host_vector<complex_t>;
+using cVecd_t = thrust::device_vector<complex_t>;	
 
 
 /* FUNCTIONS */
 
-void NoiseGeneratorCPU ( cVech_t &As ) // set the signal field as a noisy complex vector
+void NoiseGeneratorCPU ( cVech_t &A ) // set the signal/idler field as a noisy complex vector
 {
 	unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
 	std::default_random_engine generator(seed);
-	std::normal_distribution<typefl_t> distribution(0.0, 1.0e-15);
+	std::normal_distribution<real_t> distribution(0.0, 1.0e-15);
 
-	for (int i=0; i < As.size(); ++i) {
-		As[i].x = distribution(generator);
-		As[i].y = distribution(generator);
+	for (int i=0; i < A.size(); ++i) {
+		A[i].x = distribution(generator);
+		A[i].y = distribution(generator);
 	}
 	
 	return ;
 	
 }
 
-void InputField(cVech_t &Ap, typefl_t Ap0, std::string regime) // set the input cw pump field
+void InputField(cVech_t &Ap, real_t Ap0, std::string regime) // set the input cw pump field on host
 {
 	if(regime == "cw"){
 		std::cout << "Wave:                   Continuous Wave\n" << std::endl;
@@ -82,7 +82,7 @@ void InputField(cVech_t &Ap, typefl_t Ap0, std::string regime) // set the input 
 }
 
 
-void linspace( rVech_t &V, typefl_t xmin, typefl_t xmax)// fills the a vector
+void linspace( rVech_t &V, real_t xmin, real_t xmax)// fills the a vector on host
 {
 	for (int i = 0; i < V.size(); i++)
 		V[i] = xmin + i * (xmax - xmin)/(V.size()-1);
@@ -91,7 +91,7 @@ void linspace( rVech_t &V, typefl_t xmin, typefl_t xmax)// fills the a vector
 }
 
 
-void linspace( rVecd_t &V, typefl_t xmin, typefl_t xmax)  // fills the a vector
+void linspace( rVecd_t &V, real_t xmin, real_t xmax)  // fills the a vector on device
 {
 	for (int i = 0; i < V.size(); i++)
 		V[i] = xmin + i * (xmax - xmin)/(V.size()-1);
@@ -100,7 +100,7 @@ void linspace( rVecd_t &V, typefl_t xmin, typefl_t xmax)  // fills the a vector
 }
 
 
-void inic_vector_F(rVech_t &V, typefl_t DF)  // fills the frequency vector
+void inic_vector_F(rVech_t &V, real_t DF)  // fills the frequency vector on host
 {
     for (int i = 0; i < V.size(); i++){
         V[i] = i * DF - V.size() * DF/2.0;
@@ -110,7 +110,7 @@ void inic_vector_F(rVech_t &V, typefl_t DF)  // fills the frequency vector
 }
 
 
-void inic_vector_F(rVecd_t &V, typefl_t DF) // fills the frequency vector
+void inic_vector_F(rVecd_t &V, real_t DF) // fills the frequency vector on device
 {
     for (int i = 0; i < V.size(); i++){
         V[i] = i * DF - V.size() * DF/2.0;
@@ -133,7 +133,7 @@ void fftshift( rVech_t &V_ss, rVech_t v ) // flips a vector
 }
 
 
-void dAdz( cVecd_t &dAp, cVecd_t &dAs, cVecd_t &Ap, cVecd_t &As, typefl_t kp, typefl_t ks, typefl_t dk, typefl_t z )
+void dAdz( cVecd_t &dAp, cVecd_t &dAs, cVecd_t &Ap, cVecd_t &As, real_t kp, real_t ks, real_t dk, real_t z )
 {
 	/**
 	 * This functions accounts returns the electric fields variation along z, and it is used in the RK4 method.
@@ -147,8 +147,8 @@ void dAdz( cVecd_t &dAp, cVecd_t &dAs, cVecd_t &Ap, cVecd_t &As, typefl_t kp, ty
 	 * z:					distance propagation
 	 */
 	
-	CC_t const_p =  make_float2(-kp*sinf(dk*z), +kp*cosf(dk*z));
-	CC_t const_s =  make_float2(+ks*sinf(dk*z), +ks*cosf(dk*z));
+	complex_t const_p =  make_float2(-kp*sinf(dk*z), +kp*cosf(dk*z));
+	complex_t const_s =  make_float2(+ks*sinf(dk*z), +ks*cosf(dk*z));
 		
 	thrust::transform(As.begin(), As.end(), As.begin(), dAp.begin(), ComplexMultbyComplexCoef(const_p) );
 	
@@ -161,7 +161,7 @@ void dAdz( cVecd_t &dAp, cVecd_t &dAs, cVecd_t &Ap, cVecd_t &As, typefl_t kp, ty
 }
 
 
-void RK4(cVecd_t &Ap, cVecd_t &As, cVecd_t &k1p, cVecd_t &k1s, cVecd_t &k2p, cVecd_t &k2s, cVecd_t &k3p, cVecd_t &k3s, cVecd_t &k4p, cVecd_t &k4s, typefl_t dz)
+void RK4(cVecd_t &Ap, cVecd_t &As, cVecd_t &k1p, cVecd_t &k1s, cVecd_t &k2p, cVecd_t &k2s, cVecd_t &k3p, cVecd_t &k3s, cVecd_t &k4p, cVecd_t &k4s, real_t dz)
 {
 	/**
 	 * This functions accounts returns the electric fields after solving the fourth-order Runge-Kutta
@@ -190,7 +190,7 @@ void RK4(cVecd_t &Ap, cVecd_t &As, cVecd_t &k1p, cVecd_t &k1s, cVecd_t &k2p, cVe
 }
 
 
-void LinearOperator(cVecd_t &Apw, cVecd_t &Asw, cVecd_t &w_GVDp, cVecd_t &w_GVDs, typefl_t alphap, typefl_t alphas, typefl_t dz)
+void LinearOperator(cVecd_t &Apw, cVecd_t &Asw, cVecd_t &w_GVDp, cVecd_t &w_GVDs, real_t alphap, real_t alphas, real_t dz)
 {
 	/**
 	 * This functions accounts for the linear effects on the electric fields
@@ -203,8 +203,8 @@ void LinearOperator(cVecd_t &Apw, cVecd_t &Asw, cVecd_t &w_GVDp, cVecd_t &w_GVDs
 	 * dz:                    step size in z
 	 */
 	
-	typefl_t attenp = expf(-0.5*alphap*dz);
-	typefl_t attens = expf(-0.5*alphas*dz);
+	real_t attenp = expf(-0.5*alphap*dz);
+	real_t attens = expf(-0.5*alphas*dz);
 		
 	thrust::transform ( Apw.begin(), Apw.end(), w_GVDp.begin(), Apw.begin(), ComplexMultbyRealCoef(attenp));
 	thrust::transform ( Asw.begin(), Asw.end(), w_GVDs.begin(), Asw.begin(), ComplexMultbyRealCoef(attens));
@@ -213,7 +213,7 @@ void LinearOperator(cVecd_t &Apw, cVecd_t &Asw, cVecd_t &w_GVDp, cVecd_t &w_GVDs
 }
 
 
-void SinglePass( cufftHandle plan, cVecd_t &w_GVDp, cVecd_t &w_GVDs, cVecd_t &Ap, cVecd_t &As, cVecd_t &Apw, cVecd_t &Asw, cVecd_t &k1p, cVecd_t &k1s, cVecd_t &k2p, cVecd_t &k2s, cVecd_t &k3p, cVecd_t &k3s, cVecd_t &k4p, cVecd_t &k4s, cVecd_t &auxp, cVecd_t &auxs, typefl_t dk, typefl_t alphap, typefl_t alphas, typefl_t kp, typefl_t ks, typefl_t dz, int steps_z )
+void SinglePass( cufftHandle plan, cVecd_t &w_GVDp, cVecd_t &w_GVDs, cVecd_t &Ap, cVecd_t &As, cVecd_t &Apw, cVecd_t &Asw, cVecd_t &k1p, cVecd_t &k1s, cVecd_t &k2p, cVecd_t &k2s, cVecd_t &k3p, cVecd_t &k3s, cVecd_t &k4p, cVecd_t &k4s, cVecd_t &auxp, cVecd_t &auxs, real_t dk, real_t alphap, real_t alphas, real_t kp, real_t ks, real_t dz, int steps_z )
 {
 	/**
 	 * This functions accounts for a single-pass on the nonlinear crystal. 
@@ -240,7 +240,7 @@ void SinglePass( cufftHandle plan, cVecd_t &w_GVDp, cVecd_t &w_GVDs, cVecd_t &Ap
 	 * steps_z:                 	number of slices in the nonlinear crystal
 	 */
 
-	typefl_t z = 0;
+	real_t z = 0;
 	for (int s = 0; s < steps_z; s++){
 		
 		/* RK4 for dz */
@@ -293,7 +293,7 @@ void SinglePass( cufftHandle plan, cVecd_t &w_GVDp, cVecd_t &w_GVDs, cVecd_t &Ap
 }
 
 
-void AddPhase( cVecd_t &As, typefl_t R, typefl_t delta, int rtn )
+void AddPhase( cVecd_t &As, real_t R, real_t delta, int rtn )
 {
 	/**
 	 * This functions accounts for the accumulated phase and reflectivity losses 
@@ -307,7 +307,7 @@ void AddPhase( cVecd_t &As, typefl_t R, typefl_t delta, int rtn )
 	 * rtn:       is the number of round trip
 	 */
 		
-	CC_t const_s =  make_float2( sqrtf(R)*cosf(PI*(rtn+delta)), sqrtf(R)*sinf(PI*(rtn+delta)) );
+	complex_t const_s =  make_float2( sqrtf(R)*cosf(PI*(rtn+delta)), sqrtf(R)*sinf(PI*(rtn+delta)) );
 	As *= const_s;
 	
 	return ;

@@ -5,7 +5,7 @@
 
 /**
  * This file contains the functors needed for the overloaded operators 
- * and the transformations done along the scritp. 
+ * and the transformations done along the script. 
  *  
  * */
 
@@ -35,19 +35,19 @@
 #include <thrust/reduce.h>
 
 // Complex data type
-using CC_t = cuFloatComplex;
-using typefl_t = float;
+using complex_t = cuFloatComplex;
+using real_t = float;
 
-using rVech_t = thrust::host_vector<typefl_t>;
-using rVecd_t = thrust::device_vector<typefl_t>;
-using cVech_t = thrust::host_vector<CC_t>;
-using cVecd_t = thrust::device_vector<CC_t>;	
+using rVech_t = thrust::host_vector<real_t>;
+using rVecd_t = thrust::device_vector<real_t>;
+using cVech_t = thrust::host_vector<complex_t>;
+using cVecd_t = thrust::device_vector<complex_t>;	
 
 
 struct RealScale // This functor scales by N, with N as a real constant
 {
-	typefl_t Norm;
-	RealScale(typefl_t N) {Norm = N;};
+	real_t Norm;
+	RealScale(real_t N) {Norm = N;};
 	__host__ __device__
 	cuFloatComplex operator()(cuFloatComplex V1)
 	{
@@ -59,8 +59,8 @@ struct RealScale // This functor scales by N, with N as a real constant
 
 struct ComplexScale // This functor scales by N, with N as a complex constant
 {
-	CC_t Norm;
-	ComplexScale(CC_t N) {Norm = N;};
+	complex_t Norm;
+	ComplexScale(complex_t N) {Norm = N;};
 	__host__ __device__
 	cuFloatComplex operator()(cuFloatComplex V1)
 	{
@@ -106,8 +106,8 @@ struct ComplexMult // This functor performs the multiplication
 
 struct ComplexMultbyRealCoef // This functor performs the a*A*B, a real
 {
-	typefl_t a;
-	ComplexMultbyRealCoef(typefl_t A)  {a=A;};
+	real_t a;
+	ComplexMultbyRealCoef(real_t A)  {a=A;};
 	__host__ __device__
 	cuFloatComplex operator()(cuFloatComplex V1, cuFloatComplex V2)
 	{
@@ -119,8 +119,8 @@ struct ComplexMultbyRealCoef // This functor performs the a*A*B, a real
 
 struct ComplexMultbyComplexCoef // This functor performs the a*A*B, a complex
 {
-	CC_t a;
-	ComplexMultbyComplexCoef(CC_t A)  {a=A;};
+	complex_t a;
+	ComplexMultbyComplexCoef(complex_t A)  {a=A;};
 	__host__ __device__
 	cuFloatComplex operator()(cuFloatComplex V1, cuFloatComplex V2)
 	{
@@ -132,8 +132,8 @@ struct ComplexMultbyComplexCoef // This functor performs the a*A*B, a complex
 
 struct ComplexLinearCombRealCoef // This functor performs the a*A+b*B, a,b reals
 {
-	typefl_t a, b;
-	ComplexLinearCombRealCoef(typefl_t A, typefl_t B)  {a=A, b=B;};
+	real_t a, b;
+	ComplexLinearCombRealCoef(real_t A, real_t B)  {a=A, b=B;};
 
 	__host__ __device__
 	cuFloatComplex operator()(cuFloatComplex V1, cuFloatComplex V2)

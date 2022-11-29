@@ -57,8 +57,8 @@
  * defined to make the code more readable.
  *
  * Definitions for numbers
- * typefl_t : datatype for real numbers
- * CC_t     : datatype for complex numbers
+ * real_t : datatype for real numbers
+ * complex_t     : datatype for complex numbers
  * 
  * Definitions for vectors:
  * 
@@ -68,20 +68,20 @@
  * cVecd_t  : complex vector device
  */
 
-using typefl_t = float;
-using CC_t = cuFloatComplex;
-using rVech_t = thrust::host_vector<typefl_t>;
-using rVecd_t = thrust::device_vector<typefl_t>;
-using cVech_t = thrust::host_vector<CC_t>;
-using cVecd_t = thrust::device_vector<CC_t>;	
+using real_t = float;
+using complex_t = cuFloatComplex;
+using rVech_t = thrust::host_vector<real_t>;
+using rVecd_t = thrust::device_vector<real_t>;
+using cVech_t = thrust::host_vector<complex_t>;
+using cVecd_t = thrust::device_vector<complex_t>;	
 	
 
 int main(int argc, char *argv[]){
 	
 	
-	const typefl_t PI   = 3.141592653589793238462643383279502884;	
-	const typefl_t C    = 299792458*1E6/1E12;              // speed of ligth in vacuum [um/ps]
-	const typefl_t EPS0 = 8.8541878128E-12*1E12/1E6;       // vacuum pertivity [W.ps/V²μm] 
+	const real_t PI   = 3.141592653589793238462643383279502884;	
+	const real_t C    = 299792458*1E6/1E12;              // speed of ligth in vacuum [um/ps]
+	const real_t EPS0 = 8.8541878128E-12*1E12/1E6;       // vacuum pertivity [W.ps/V²μm] 
 
 	std::cout << "\n\n\n#######---Welcome to OPO calculator---#######\n\n\n" << std::endl;
 
@@ -108,47 +108,53 @@ int main(int argc, char *argv[]){
 	int N_rt                 = atoi(argv[8]); // number of round trips to cover the input pulse
 
 	// Define wavelengths
-	typefl_t lp              = 0.532;    // pump wavelength [μm]
-	typefl_t ls              = 2*lp;     // signal wavelength [μm]
+	real_t lp              = 0.532;    // pump wavelength [μm]
+	real_t ls              = 2*lp;     // signal wavelength [μm]
 
-	typefl_t Temperature     = 27;       // Crystal temperature [ºC]
-	typefl_t deff            = 14.77e-6; // effective d [um/V]
-	typefl_t Lambda          = 6.97;     // grating period [um]
-	typefl_t alphap          = 0.002e-4; // pump linear absorption [1/um]
-	typefl_t alphas          = 0.025e-4; // signal linear absorption [1/um]
-	typefl_t np              = n_PPLN(lp, Temperature); // refractive index at pump wavelength
-	typefl_t vp              = group_vel_PPLN(lp, Temperature); // group velocity at pump wavelength
-	typefl_t b2p             = gvd_PPLN(lp, Temperature);  // GVD at pump wavelength
-	typefl_t kp              = 2*PI*deff/(n_PPLN(lp, Temperature)*lp); // kappa pump [1/V]
-	
-	typefl_t ns              = n_PPLN(ls, Temperature);  // refractive index at signal wavelength
-	typefl_t vs              = group_vel_PPLN(ls, Temperature); // group velocity at signal wavelength
-	typefl_t b2s             = gvd_PPLN(ls, Temperature); // GVD at signal wavelength
-	typefl_t ks              = 2*PI*deff/(n_PPLN(ls, Temperature)*ls); // kappa signal [1/V]
-	typefl_t dk              = 2*PI*( np/lp - 2*ns/ls - 1/Lambda ); // mismatch factor
-	
-	typefl_t Lcr             = 5e3;  // crystal length [um]
-	typefl_t Lcav            = atof(argv[4]) * Lcr;  // cavity length [um]
-	typefl_t R               = atof(argv[5])*0.01;  // net reflectivity 
-	typefl_t t_rt            = (Lcav+Lcr*(n_PPLN(ls, Temperature)-1))/C;
-	typefl_t FSR             = 1/t_rt; // free spectral range
-	typefl_t delta           = atof(argv[6]); if(R<=0.5){delta *= 0.01;} else{delta *= 0.001;}
-	typefl_t epsilon         = atof(argv[7])*0.01;
-	typefl_t GDD             = -epsilon*b2s*Lcr; // GDD [ps²]
+	real_t Temperature     = 27;       // Crystal temperature [ºC]
+	real_t deff            = 14.77e-6; // effective d [um/V]
+	real_t Lambda          = 6.97;     // grating period [um]
+	real_t alpha_crp       = 0.025e-4; // pump linear absorption [1/μm]
+	real_t alpha_crs       = 0.002e-4; // signal linear absorption [1/μm]
 
+	real_t np              = n_PPLN(lp, Temperature); // refractive index at pump wavelength
+	real_t vp              = group_vel_PPLN(lp, Temperature); // group velocity at pump wavelength
+	real_t b2p             = gvd_PPLN(lp, Temperature);  // GVD at pump wavelength
+	real_t b3p             = 0.*TOD_PPLN(lp, Temperature);       // pump TOD [ps³/μm]	
+	real_t kp              = 2*PI*deff/(n_PPLN(lp, Temperature)*lp); // kappa pump [1/V]
+	
+	real_t ns              = n_PPLN(ls, Temperature);  // refractive index at signal wavelength
+	real_t vs              = group_vel_PPLN(ls, Temperature); // group velocity at signal wavelength
+	real_t b2s             = gvd_PPLN(ls, Temperature); // GVD at signal wavelength
+	real_t b3s             = 0.*TOD_PPLN(ls, Temperature);       // signal TOD [ps³/μm]	
+	real_t ks              = 2*PI*deff/(n_PPLN(ls, Temperature)*ls); // kappa signal [1/V]
+	real_t dk              = 2*PI*( np/lp - 2*ns/ls - 1/Lambda ); // mismatch factor
+	
+	real_t Lcr             = 5e3;  // crystal length [um]
+	real_t Lcav            = atof(argv[4]) * Lcr;  // cavity length [um]
+	real_t R               = atof(argv[5])*0.01;  // net reflectivity 
+	real_t t_rt            = (Lcav+Lcr*(n_PPLN(ls, Temperature)-1))/C;
+	real_t FSR             = 1/t_rt; // free spectral range
+	real_t delta           = atof(argv[6]); if(R<=0.5){delta *= 0.01;} else{delta *= 0.001;}
+	real_t epsilon         = atof(argv[7])*0.01;
+	real_t GDD             = -epsilon*b2s*Lcr; // GDD [ps²]
+	real_t TOD             = -0.01*atof(argv[13])*b3s*Lcr; // TOD [ps³]
+
+	real_t alphas          = 0.5*((1-R)+alpha_crs*Lcr);    // Total losses for threshold condition signal
+	
 	int steps_z              = atoi(argv[3]); // number of z step inside the crystal
-	typefl_t dz              = Lcr/steps_z;   // z-step size
+	real_t dz              = Lcr/steps_z;   // z-step size
 	
 	// Time and frequency discretization
 	
 	unsigned int ex          = atoi(argv[2]);
 	int N_ps                 = 1 << ex;  // points per time slice
-	typefl_t dT              = t_rt/N_ps; // time step in [ps]
-	typefl_t dF              = 1/t_rt; // frequency step in [THz]
+	real_t dT              = t_rt/N_ps; // time step in [ps]
+	real_t dF              = 1/t_rt; // frequency step in [THz]
 	int SIZE                 = N_ps;
-	unsigned int Nrts        = 256; // number of round trips to save
+	unsigned int Nrts        = 32; // number of round trips to save
 	int SIZEL                = N_ps*Nrts;
-	typefl_t T_width         = (typefl_t ) (Nrts*t_rt); // total time for input ns-pulse
+	real_t T_width         = (real_t ) (Nrts*t_rt); // total time for input ns-pulse
     
 	/* vector T for one round trip */
 	rVech_t T(SIZE); 
@@ -159,7 +165,7 @@ int main(int argc, char *argv[]){
 	linspace( Tp, -0.5*T_width, 0.5*T_width);
 	
 	/* vector F_p for the complete pump frequency */
-	typefl_t dF_p = 1/T_width;
+	real_t dF_p = 1/T_width;
 	rVech_t F_p(SIZEL) ; inic_vector_F(F_p, dF_p);
 
 	short unsigned int save_vectors = atoi(argv[1]);
@@ -174,32 +180,47 @@ int main(int argc, char *argv[]){
 	rVech_t F_ext(SIZE); inic_vector_F(F_ext, dF); // extended freq. grid [THz]
 
 	rVech_t w(SIZE);  // angular frequency Ω
-	cVech_t w_GVDp_h(SIZE); // e^(i.dz.((1/vs-1/vp).Ω + ½.β.Lcr.Ω²))
-	cVech_t w_GVDs_h(SIZE); // i.½.β.Ω².dz
+	cVech_t w_DISPp_h(SIZE); // e^(i.dz.((1/vs-1/vp).Ω + ½.β.Lcr.Ω²))
+	cVech_t w_DISPs_h(SIZE); // i.½.β.Ω².dz
 	cVech_t w_Comp_h(SIZE);  // e^(-i.½.ε.β.Lcr.Ω²)
 	
 	fftshift(w, F_ext);   // define ang ref for FFTs  [2*pi*THz]
 	
 	for ( int i = 0; i < w.size(); i++ ){
 		w[i] *= 2*PI;
-		w_GVDp_h[i].x = +cosf( dz * (w[i]*(1/vs-1/vp) + 0.5*b2p*w[i]*w[i]) );
-		w_GVDp_h[i].y = +sinf( dz * (w[i]*(1/vs-1/vp) + 0.5*b2p*w[i]*w[i]) );
-		w_GVDs_h[i].x = +cosf( dz * 0.5*b2s*w[i]*w[i] );
-		w_GVDs_h[i].y = +sinf( dz * 0.5*b2s*w[i]*w[i] );
-		w_Comp_h[i].x = +cosf( 0.5*GDD*w[i]*w[i] );
-		w_Comp_h[i].y = +sinf( 0.5*GDD*w[i]*w[i] );
+		w_DISPp_h[i].x = +cosf( dz * w[i] * ((1/vs-1/vp)+0.5*b2p*w[i]+b3p*w[i]*w[i]/6) );
+		w_DISPp_h[i].y = +sinf( dz * w[i] * ((1/vs-1/vp)+0.5*b2p*w[i]+b3p*w[i]*w[i]/6) );
+		w_DISPs_h[i].x = +cosf( dz * w[i] * ((1/vs-1/vs)+0.5*b2s*w[i]+b3s*w[i]*w[i]/6) );
+		w_DISPs_h[i].y = +sinf( dz * w[i] * ((1/vs-1/vs)+0.5*b2s*w[i]+b3s*w[i]*w[i]/6) );
+		w_Comp_h[i].x = +cosf( 0.5*GDD*w[i]*w[i] + TOD*w[i]*w[i]*w[i]/6 );
+		w_Comp_h[i].y = +sinf( 0.5*GDD*w[i]*w[i] + TOD*w[i]*w[i]*w[i]/6 );
 	}
 	
-	cVecd_t w_GVDp_d = w_GVDp_h, w_GVDs_d = w_GVDs_h, w_Comp_d = w_Comp_h; // copy to device the angular frequency vectors
+	cVecd_t w_DISPp_d = w_DISPp_h, w_DISPs_d = w_DISPs_h, w_Comp_d = w_Comp_h; // copy to device the angular frequency vectors
 	
 		
 	// Pumping parameters //
 	
 	std::string pump_regime = "cw";					// continuous wave pump
-	typefl_t waist           = 55;                      		// beam waist radius [um]
-	typefl_t spot            = PI*waist*waist;          		// spot area [μm²]
-	typefl_t Power           = atof(argv[9])*1e-3;           	// pump power [mW]
-	typefl_t Ap0             = sqrt(2*Power/(spot*np*EPS0*C)) ; // input field amplitud [V/μm]
+	// Define input pump parameters
+	real_t waist = 55;             // beam waist radius [um]
+	real_t spot  = PI*waist*waist; // spot area [μm²]
+	#ifdef THREE_EQS
+	// Power and intensity threshold non-degenerate DRO 
+	real_t Ith   = EPS0*C*np*ns*ni*ls*li*pow((1/deff/Lcr/PI),2)*alphas*alphai/8;
+	real_t Pth   = Ith*spot;
+	#else
+	// Power and intensity threshold degenerate DRO 
+	real_t Ith   = EPS0*C*np*pow((ns*ls*alphas/deff/Lcr/PI), 2)/8;
+	real_t Pth   = Ith*spot;
+	#endif
+	// Times over the threshold
+	real_t Nth   = atof(argv[9]); 	
+	// Pump intensity and power, times over the threshold in [W]
+	real_t Inten = atof(argv[9])*Ith;
+	real_t Power = Inten*spot; 
+	// Input pump field strength [V/μm]
+	real_t Ap0   = sqrt(2*Inten/(np*EPS0*C)) ;
 	
 	cVech_t Ap_in(SIZE);	
 	InputField(Ap_in, Ap0, pump_regime);
@@ -209,6 +230,27 @@ int main(int argc, char *argv[]){
 	
 	Filename = "signal_input";
 	SaveFileVectorComplex(As, Filename);
+	
+	/********************************/
+	// PHASE MODULATION
+	bool using_phase_modulator = atoi(argv[10]);
+	real_t mod_depth, fpm, df;
+	cVech_t T_PM_h(SIZE);
+	if(using_phase_modulator){		
+		mod_depth       = atof(argv[11])*PI;
+		df              = atof(argv[12])*sqrtf(Nth-1)*alphas/(PI*mod_depth)*FSR;
+		fpm             = FSR - df;
+	}
+	else{std::cout << "No phase modulator" << std::endl;}
+	
+	for (int i = 0; i < T_PM_h.size(); i++){
+		T_PM_h[i].x = cosf(mod_depth*sinf(2*PI*fpm*T[i]));
+		T_PM_h[i].y = sinf(mod_depth*sinf(2*PI*fpm*T[i]));
+	}
+	
+	cVecd_t T_PM_d = T_PM_h;		
+	/********************************/
+	
 
 	bool prt_param_onscreen = true;
 	if( prt_param_onscreen ){
@@ -225,12 +267,18 @@ int main(int argc, char *argv[]){
 		std::cout << "\u0394k                      = " << dk << " \u03BCm⁻¹" << std::endl;
 		std::cout << "GVD pump                = " << b2p << " ps²/\u03BCm" << std::endl;
 		std::cout << "GVD signal              = " << b2s << " ps²/\u03BCm" << std::endl;
-		std::cout << "GVD compensation        = " << atoi(argv[7]) << " %"  << std::endl;
-		std::cout << "Cavity net dispersion   = " << (1-epsilon)*b2s*1e3 << " fs²/\u03BCm"  << std::endl;
+		std::cout << "TOD pump                = " << b3p << " ps³/\u03BCm" << std::endl;
+		std::cout << "TOD signal              = " << b3s << " ps³/\u03BCm" << std::endl;
+		std::cout << "Net GVD                 = " << (1-epsilon)*b2s << " ps²/\u03BCm" << std::endl;
+		std::cout << "Net TOD                 = " << (1-0.01*atof(argv[13]))*b3s << " ps³/\u03BCm" << std::endl;
+		std::cout << "GVD compensation        = " << atof(argv[7]) << " %"  << std::endl;
+		std::cout << "TOD compensation        = " << atof(argv[13]) << " %"  << std::endl;
+		std::cout << "Cavity net dispersion   = " << (1-epsilon)*b2s*Lcr*1e6 << " fs²"  << std::endl;
 		std::cout << "deff                    = " << deff*1e6 << " pm/V"  << std::endl;
 		std::cout << "\u039B                       = " << Lambda << " \u03BCm"  << std::endl;
-		std::cout << "\u03B1p                      = " << alphap << " \u03BCm⁻¹"  << std::endl;
-		std::cout << "\u03B1s                      = " << alphas << " \u03BCm⁻¹" << std::endl;
+		std::cout << "\u03B1_cp                    = " << alpha_crp << " \u03BCm⁻¹"  << std::endl;
+		std::cout << "\u03B1_cs                    = " << alpha_crs << " \u03BCm⁻¹" << std::endl;
+		std::cout << "\u03B1s                      = " << alphas << " \u03BCm⁻¹" << std::endl;		
 		std::cout << "Crystal length          = " << Lcr*1e-3 << " mm"  << std::endl;
 		std::cout << "Cavity  length          = " << Lcav*1e-3 << " mm"  << std::endl;
 		std::cout << "\u0394z                      = " << dz << " \u03BCm"  << std::endl;
@@ -245,31 +293,18 @@ int main(int argc, char *argv[]){
 		std::cout << "Ap0                     = " << Ap0 << " V/um" << std::endl; 
 		std::cout << "waist                   = " << waist << " \u03BCm" << std::endl;
 		std::cout << "spot                    = " << spot << " \u03BCm²" << std::endl;
+		std::cout << "Power threshold         = " << Pth << " W" << std::endl;
 		std::cout << "Power                   = " << Power << " W" << std::endl;
+		std::cout << "Times above the thres.  = " << Nth << std::endl;
+		if(using_phase_modulator){
+			std::cout << "\n\nUsing a phase modulator:\n" << std::endl;
+			std::cout << "Mod. depth (\u03B2)          = " << atof(argv[11]) << "\u03C0" << std::endl;
+			std::cout << "Mod. frequency (fpm)    = " << fpm*1e3 << " GHz" << std::endl;
+			std::cout << "Frequency detuning (\u03B4f) = " << df*1e6 << " MHz" << std::endl;
+		}
+		else{std::cout << "No phase modulator" << std::endl;}
 	}
 
-	/********************************/
-	// PHASE MODULATION
-	bool using_phase_modulator = atoi(argv[10]);
-	typefl_t mod_depth, fpm;
-	cVech_t T_PM_h(SIZE);
-	if(using_phase_modulator){
-		mod_depth       = atof(argv[11])*0.1;
-		fpm             = FSR - atof(argv[12])*1e-6;
-		
-		std::cout << "\n\nUsing a phase modulator:" << std::endl;
-		std::cout << "Mod. depth (\u03B2)          = " << mod_depth << std::endl;
-		std::cout << "Mod. frequency (fpm)    = " << fpm*1e3 << " GHz" << std::endl;
-	}
-	else{std::cout << "No phase modulator" << std::endl;}
-	
-	for (int i = 0; i < T_PM_h.size(); i++){
-		T_PM_h[i].x = cosf(mod_depth*sinf(2*PI*fpm*T[i]));
-		T_PM_h[i].y = sinf(mod_depth*sinf(2*PI*fpm*T[i]));
-	}
-	
-	cVecd_t T_PM_d = T_PM_h;		
-	/********************************/
 	
 	/********************************/
 	// Device vectors	//    
@@ -294,10 +329,10 @@ int main(int argc, char *argv[]){
 		Ap_d = Ap_in; // In every round trip, Ap <- Bin
 
 		// Evolution along the nonlinear crystal
-		SinglePass( plan, w_GVDp_d, w_GVDs_d, Ap_d,
+		SinglePass( plan, w_DISPp_d, w_DISPs_d, Ap_d,
 				As_d, Apw_d, Asw_d, k1p, k1s,
 				k2p, k2s, k3p, k3s, k4p, k4s,
-				auxp, auxs,	dk, alphap, alphas,
+				auxp, auxs,	dk, alpha_crp, alpha_crs,
 				kp, ks, dz, steps_z );
 
 		ifft ( As_d, Asw_d, plan );
