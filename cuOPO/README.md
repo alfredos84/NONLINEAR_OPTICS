@@ -18,6 +18,17 @@ The package provides a shell script file (`cuOPO.sh`) where a set of different r
  ```
  nvcc cuOPO.cu -DCW_OPO --gpu-architecture=sm_75 -lcufftw -lcufft -o cuOPO
 ```
+The `nvcc` compiler compiles the file `cuOPO.cu` and creates the executable object file `cuOPO`. The flags `-lcufftw` and `-lcufft` are useful for the Fourier transform performed by CUDA. The flag `-DCW_OPO` indicates the continuous-wave pumping regime (it is also available nanosecond regime by setting `-DNS-OPO`). By default, this package works at degeneracy. This means that only two equations are required. If you are working in a non-degenerate scheme, you will need three CWEs and this is passed to compilation line by adding the flag `-DTHREE_EQS`. Finally, the flag `--gpu-architecture=sm_75` is related to the GPU architecture.
+
+#### Execution line
+```
+./cuOPO <LIST-OF-ARGUMENTS> | tee -a <output_file.txt>
+```
+This line just executes the packege and creates an output text file with the simulation outcome.
+
+### Outputs
+
+This package returns a set of `.dat` files with the signal, idler and pump electric fields, separated into real and imaginary parts. It also returns time and frequency vectors
 
 ### GPU architecture
 Make sure you know your GPU architecture before compiling and running simulations. For example, pay special attention to the sm_75 flag defined in the provided `cuOPO.sh` file. That flag might not be the same for your GPU since it corresponds to a specific architecture. For instance, I tested this package using two different GPUs:
